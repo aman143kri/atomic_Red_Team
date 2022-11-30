@@ -1,0 +1,39 @@
+attack_technique: T1610
+display_name: Deploy Container
+atomic_tests:
+- name: ExecIntoContainer
+  auto_generated_guid: d03bfcd3-ed87-49c8-8880-44bb772dea4b
+  description: |
+    #Attackers who have permissions, can run malicious commands in containers in the cluster using exec command (“kubectl exec”). In this method, attackers can use legitimate images, such as an OS image (e.g., Ubuntu) as a backdoor container, and run their malicious code remotely by using “kubectl exec”.
+    Attackers who have permissions, can run malicious commands in containers in the cluster using start command (“docker start”). In this method, attackers can use legitimate images, such as an OS image (e.g., Ubuntu) as a backdoor container, and run their malicious code remotely by using “docker run” & "docker exec".
+  supported_platforms:
+  - dockers
+  input_arguments:
+    namespace:
+      description: docker namespace to use
+      type: String
+      default: default
+    command:
+      description: Command to run
+      type: String
+      default: uname
+  dependencies:
+  - description: |
+      docker must be installed
+    get_prereq_command: |
+      echo "docker must be installed manually"
+    prereq_command: |
+      command -v docker
+  executor:
+    command: |
+      docker build -t t1610  src/
+      docker run --name t1610_container --rm -itd t1610 bash /tmp/script.sh
+      docker exec -it t1610_container cat /tmp/output.txt > test_attack 
+      #kubectl create -f src/busybox.yaml -n #{namespace}
+      #kubectl exec -n #{namespace} busybox -- #{command}
+    cleanup_command: |
+      #kubectl delete pod busybox -n #{namespace}
+      docker stop $(docker ps -a -q)
+      docker rmi -f t1610
+    name: bash
+    elevation_required: false
